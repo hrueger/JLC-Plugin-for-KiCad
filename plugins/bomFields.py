@@ -1,0 +1,8 @@
+INDEX = "Index"
+VALUE = "Value"
+DESCRIPTION = "Description"
+DESIGNATOR = "Designator"
+FOOTPRINT = "Footprint"
+QUANTITY = "Quantity"
+MANUFACTURER = "Manufacturer"
+MPN = "MPN"

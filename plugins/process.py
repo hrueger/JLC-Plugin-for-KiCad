@@ -17,6 +17,7 @@ from .utils import footprint_has_field, footprint_get_field
 # Application definitions.
 from .config import *
 
+from . import bomFields
 
 class ProcessManager:
     def __init__(self):
@@ -211,27 +212,33 @@ class ProcessManager:
                 # merge similar parts into single entry
                 insert = True
                 for component in self.bom:
-                    same_footprint = component['Footprint'] == self._normalize_footprint_name(footprint_name)
-                    same_value = component['Value'].upper() == footprint.GetValue().upper()
-                    same_lcsc = component['LCSC Part #'] == self._get_mpn_from_footprint(footprint)
-                    under_limit = component['Quantity'] < bomRowLimit
-
+                    same_footprint = component[bomFields.FOOTPRINT] == self._normalize_footprint_name(footprint_name)
+                    same_value = component[bomFields.VALUE].upper() == footprint.GetValue().upper()
+                    same_lcsc = component[bomFields.MPN] == self._get_mpn_from_footprint(footprint)
+                    under_limit = component[bomFields.QUANTITY] < bomRowLimit
                     if same_footprint and same_value and same_lcsc and under_limit:
-                        component['Designator'] += ", " + "{}{}{}".format(footprint.GetReference(), "" if unique_id == "" else "_", unique_id)
-                        component['Quantity'] += 1
+                        component[bomFields.DESIGNATOR] += ", " + "{}{}{}".format(footprint.GetReference(), "" if unique_id == "" else "_", unique_id)
+                        component[bomFields.QUANTITY] += 1
                         insert = False
                         break
 
                 # add component to BOM
                 if insert:
                     self.bom.append({
-                        'Designator': "{}{}{}".format(footprint.GetReference(), "" if unique_id == "" else "_", unique_id),
-                        'Footprint': self._normalize_footprint_name(footprint_name),
-                        'Quantity': 1,
-                        'Value': footprint.GetValue(),
+                        bomFields.INDEX: 0, # will be set later
+                        bomFields.VALUE: footprint.GetValue(),
+                        bomFields.DESCRIPTION: footprint_get_field(footprint, 'Description') if footprint_has_field(footprint, "Description") else "",
+                        bomFields.DESIGNATOR: "{}{}{}".format(footprint.GetReference(), "" if unique_id == "" else "_", unique_id),
+                        bomFields.FOOTPRINT: self._normalize_footprint_name(footprint_name),
+                        bomFields.QUANTITY: 1,
+                        bomFields.MANUFACTURER: footprint_get_field(footprint, 'Manufacturer') if footprint_has_field(footprint, "Manufacturer") else "",
                         # 'Mount': mount_type,
-                        'LCSC Part #': self._get_mpn_from_footprint(footprint),
+                        bomFields.MPN: self._get_mpn_from_footprint(footprint),
                     })
+
+        # set indices
+        for i, component in enumerate(self.bom):
+            component[bomFields.INDEX] = i + 1
 
     def generate_positions(self, temp_dir):
         '''Generate the position file.'''
@@ -243,7 +250,7 @@ class ProcessManager:
 
                 for component in self.components:
                     # writing data of CSV file
-                    if ('**' not in component['Designator']):
+                    if ('**' not in component[bomFields.DESIGNATOR]):
                         csv_writer.writerow(component.values())
 
     def generate_bom(self, temp_dir):
@@ -257,7 +264,7 @@ class ProcessManager:
                 # Output all of the component information
                 for component in self.bom:
                     # writing data of CSV file
-                    if ('**' not in component['Designator']):
+                    if ('**' not in component[bomFields.DESIGNATOR]):
                         csv_writer.writerow(component.values())
 
     def generate_archive(self, temp_dir, temp_file):
