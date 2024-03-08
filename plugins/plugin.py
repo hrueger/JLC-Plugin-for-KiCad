@@ -4,7 +4,7 @@ import pcbnew # type: ignore
 
 from .thread import ProcessThread
 from .events import StatusEvent
-from .options import EXCLUDE_DNP_OPT, AUTO_TRANSLATE_OPT, EXTRA_LAYERS
+from .options import EXCLUDE_DNP_OPT, AUTO_TRANSLATE_OPT, EXTRA_LAYERS, MERGE_EDGECUTS_AND_USER1_OPT
 from .config import layers
 from .utils import load_user_options, save_user_options
 
@@ -20,7 +20,7 @@ class KiCadToJLCForm(wx.Frame):
             pos=wx.DefaultPosition,
             size=wx.DefaultSize,
             style=wx.DEFAULT_DIALOG_STYLE)
-        
+
         # self.app = wx.PySimpleApp()
         icon = wx.Icon(os.path.join(os.path.dirname(__file__), 'icon.png'))
         self.SetIcon(icon)
@@ -31,7 +31,8 @@ class KiCadToJLCForm(wx.Frame):
         userOptions = load_user_options({
             EXCLUDE_DNP_OPT: False,
             EXTRA_LAYERS: "",
-            AUTO_TRANSLATE_OPT: True
+            AUTO_TRANSLATE_OPT: True,
+            MERGE_EDGECUTS_AND_USER1_OPT: True,
         })
 
         self.mOptionsLabel = wx.StaticText(self, label='Options:')
@@ -40,6 +41,8 @@ class KiCadToJLCForm(wx.Frame):
         self.mAutomaticTranslation.SetValue(userOptions[AUTO_TRANSLATE_OPT])
         self.mExcludeDnpCheckbox = wx.CheckBox(self, label='Exclude DNP components')
         self.mExcludeDnpCheckbox.SetValue(userOptions[EXCLUDE_DNP_OPT])
+        self.mMergeEdgeCutsAndUser1 = wx.CheckBox(self, label='Merge EdgeCuts and User1 layers')
+        self.mMergeEdgeCutsAndUser1.SetValue(userOptions[MERGE_EDGECUTS_AND_USER1_OPT])
 
         self.mAdditionalLayersControl = wx.TextCtrl(self, size=wx.Size(600, 50))
         self.mAdditionalLayersControl.Hint = "Additional layers"
@@ -63,6 +66,7 @@ class KiCadToJLCForm(wx.Frame):
         boxSizer.Add(self.mAdditionalLayersControl, 0, wx.ALL, 5)
         boxSizer.Add(self.mAutomaticTranslation, 0, wx.ALL, 5)
         boxSizer.Add(self.mExcludeDnpCheckbox, 0, wx.ALL, 5)
+        boxSizer.Add(self.mMergeEdgeCutsAndUser1, 0, wx.ALL, 5)
         boxSizer.Add(self.mGaugeStatus, 0, wx.ALL, 5)
         boxSizer.Add(self.mGenerateButton, 0, wx.ALL, 5)
 
@@ -78,12 +82,14 @@ class KiCadToJLCForm(wx.Frame):
         options[AUTO_TRANSLATE_OPT] = self.mAutomaticTranslation.GetValue()
         options[EXCLUDE_DNP_OPT] = self.mExcludeDnpCheckbox.GetValue()
         options[EXTRA_LAYERS] = self.mAdditionalLayersControl.GetValue()
+        options[MERGE_EDGECUTS_AND_USER1_OPT] = self.mMergeEdgeCutsAndUser1.GetValue()
 
         save_user_options(options)
 
         self.mAdditionalLayersControl.Hide()
         self.mAutomaticTranslation.Hide()
         self.mExcludeDnpCheckbox.Hide()
+        self.mMergeEdgeCutsAndUser1.Hide()
         self.mOptionsLabel.Hide()
         self.mGenerateButton.Hide()
         self.mGaugeStatus.Show()
