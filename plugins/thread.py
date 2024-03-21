@@ -46,8 +46,12 @@ class ProcessThread(Thread):
             self.process_manager.generate_drills(temp_dir_gerber)
 
             # generate netlist
-            self.progress(40)
-            self.process_manager.generate_netlist(temp_dir)
+            ## self.progress(40)
+            ## self.process_manager.generate_netlist(temp_dir)
+
+            # generate plots
+            self.progress(45)
+            self.process_manager.generate_plots(temp_dir)
 
             # generate data tables
             self.progress(50)

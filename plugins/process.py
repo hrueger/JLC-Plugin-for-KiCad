@@ -64,7 +64,7 @@ class ProcessManager:
         plot_options.SetUseAuxOrigin(True)
         plot_options.SetSubtractMaskFromSilk(True)
         plot_options.SetDrillMarksType(0)  # NO_DRILL_SHAPE
-        
+
         if hasattr(plot_options, "SetExcludeEdgeLayer"):
             plot_options.SetExcludeEdgeLayer(True)
 
@@ -278,7 +278,34 @@ class ProcessManager:
                 os.remove(os.path.join(temp_dir, item))
 
         return temp_file
-    
+
+    def generate_plots(self, temp_dir):
+        '''Generate one pdf plot for each side of the board.'''
+        plot_controller = pcbnew.PLOT_CONTROLLER(self.board)
+        plot_options = plot_controller.GetPlotOptions()
+        plot_options.SetOutputDirectory(temp_dir)
+        plot_options.SetPlotFrameRef(False)
+        plot_options.SetSketchPadLineWidth(pcbnew.FromMM(0.35))
+        plot_options.SetAutoScale(False)
+        plot_options.SetScale(1)
+
+        plot_options.SetDrillMarksType(pcbnew.DRILL_MARKS_FULL_DRILL_SHAPE)
+
+        # front side
+        layers = {
+            "front": [pcbnew.F_SilkS, pcbnew.Edge_Cuts, pcbnew.F_Mask, pcbnew.User_1],
+            "back": [pcbnew.B_SilkS, pcbnew.Edge_Cuts, pcbnew.B_Mask, pcbnew.User_1],
+        }
+
+        for side, layer_list in layers.items():
+            plot_options.SetMirror(side == "back")
+            plot_controller.OpenPlotfile("{}.pdf".format(side), pcbnew.PLOT_FORMAT_PDF, "{} side".format(side.capitalize()))
+            for layer in layer_list:
+                plot_controller.SetLayer(layer)
+                plot_controller.PlotLayer()
+            plot_controller.ClosePlot()
+
+
     """ Private """
 
     def __read_rotation_db(self, filename: str = os.path.join(os.path.dirname(__file__), 'transformations.csv')) -> dict[str, float]:
