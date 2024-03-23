@@ -29,11 +29,19 @@ def footprint_has_field(footprint, field_name):
 
 def footprint_get_field(footprint, field_name):
     version = get_version()
-    
-    if is_v8(version) or is_v9(version):
-        return footprint.GetFieldByName(field_name).GetText()
-    else:
-        return footprint.GetProperty(field_name)
+
+    value = footprint.GetFieldByName(field_name).GetText() if is_v8(version) or is_v9(version) else footprint.GetProperty(field_name)
+
+    textReplacements = {
+        "Ã¤": "ä",
+        "Ã¶": "ö",
+        "Ã¼": "ü",
+    }
+
+    for key, val in textReplacements.items():
+        value = value.replace(key, val)
+
+    return value
 
 def get_user_options_file_path():
     boardFilePath = pcbnew.GetBoard().GetFileName()
