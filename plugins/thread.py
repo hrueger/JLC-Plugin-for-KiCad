@@ -109,20 +109,23 @@ class ProcessThread(Thread):
             os.makedirs(output_path)
         
         # rename gerber archive
-        gerberArchiveName = ProcessManager.normalize_filename("_".join(("{} {}".format(title or filename, revision or '').strip() + '.zip').split()))
+        projectAndRevision = ProcessManager.normalize_filename("_".join(("{}_v{}".format(title or filename, revision or '').strip()).split()))
+        gerberArchiveName = 'gerbers_{}.zip'.format(projectAndRevision)
         os.rename(temp_file, os.path.join(temp_dir, gerberArchiveName))
 
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H-%M-%S')
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M')
         backup_name = ProcessManager.normalize_filename("_".join(("{} {} {}".format(title or filename, revision or '', timestamp).strip()).split()))
         shutil.make_archive(os.path.join(output_path, 'backups', backup_name), 'zip', temp_dir)
 
+        # zip the whole output dir
+        shutil.make_archive(os.path.join(output_path, '{}_{}'.format(timestamp, projectAndRevision)), 'zip', temp_dir)
 
         # copy to & open output dir
         try:
-            shutil.copytree(temp_dir, output_path, dirs_exist_ok=True)
+            shutil.copytree(temp_dir, os.path.join(output_path, "latest"), dirs_exist_ok=True)
             webbrowser.open("file://%s" % (output_path))
             shutil.rmtree(temp_dir)
-        except Exception as e: 
+        except Exception as e:
             webbrowser.open("file://%s" % (temp_dir))
 
         self.progress(-1)
